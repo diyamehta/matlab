@@ -15,12 +15,14 @@
 
 clc
 clear all
-tic
 
-syms h                     %% LENGTH OF NEUTRAL AXIS
-syms theta kappa  'real'   %% CONFIGURATION PARAMETERES
-syms L1 L2 L3 L(n) n  real %% CABLE LENGTHS
-syms r                     %% DISTANCE FROM THE NEUTRAL AXIS TO EACH CABLE (radius of curvature) 
+Q=[pi,4,3,0];
+q=transpose([0.5,2,1,0.5,3,2]);
+h=10;               %% LENGTH OF NEUTRAL AXIS
+ 
+   %% CONFIGURATION PARAMETERES
+syms L1 L2 L3 L(n) n  %% CABLE LENGTHS
+r=10;                %% DISTANCE FROM THE NEUTRAL AXIS TO EACH CABLE (radius of curvature) 
 
 prompt = 'What is the original value? ';
 n = input(prompt);
@@ -30,12 +32,12 @@ R=[(cos(theta)^2*(cos(kappa*h)-1)+1),sin(theta)*cos(theta)*(cos(kappa*h)-1),-cos
     sin(theta)*cos(theta)*(cos(kappa*h)-1),(cos(theta)^2*(1-cos(kappa*h))+cos(kappa*h)),-sin(theta)*sin(kappa*h);...
     cos(theta)*sin(kappa*h),sin(theta)*sin(kappa*h),cos(kappa*h)]; %% Rotation matrix
 
-
 %%Taylor Expansion Is Applied To Overcome The Singularity At Vertical Position
 
 X1= simplify((cos(theta)*(taylor(cos(kappa*h),'ExpansionPoint',0,'Order', 11)-1))/kappa);
 Y1= simplify((sin(theta)*(taylor(cos(kappa*h),'Order', 11)-1))/kappa);
 Z1 = simplify(taylor(sin(kappa*h),'Order', 11)/kappa);
+
 
 %%HOMOGENOUS TRANSFROAMTION MATRIX
 
@@ -43,9 +45,9 @@ H=[R,[X1;Y1;Z1];
    0, 0, 0, 1];
 
 %%SUBSTITUTE CONFIGURATION PARAMETERS AS A FUNCTION OF THE LENGTHS VALUE 
-hl=((n*r*(L1+L2+L3))/sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3))*asin(sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3)/(3*n*r));
-kappal=((2*sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3))/(r*(L1+L2+L3)));
-thetal=atan2(3*(L2-L3),(sqrt(3)*(L3+L2-2*L1)));
+h=((n*r*(L1+L2+L3))/sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3))*asin(sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3)/(3*n*r));
+kappa=((2*sqrt(L1.^2+L2.^2+L3.^2-L1*L2-L2*L3-L1*L3))/(r*(L1+L2+L3)));
+theta=atan2(3*(L2-L3),(sqrt(3)*(L3+L2-2*L1)));
 
 
 Hend_0=subs(H,[h kappa theta],[hl kappal thetal]);
@@ -60,7 +62,7 @@ end
 
 if(n==1)
    
-    Hend_0=subs([R,[X1;Y1;Z1];0, 0, 0, 1],[h kappa theta],[hl kappal thetal]); %% HOMOGENEOUS TRANSFROMATION MATRIX OF ONE SECTION
+    Hend_0=subs([R,[X1;Y1;Z1];0, 0, 0, 1],[h kappa theta],[h kappa theta]); %% HOMOGENEOUS TRANSFROMATION MATRIX OF ONE SECTION
                                                                                 %  FROM END EFFECTOR TO BASE FRAME
 end
 
@@ -80,10 +82,7 @@ if (n>1)
     end
 
 end
-toc
-Q=[pi,4,3,0]
-s=10
+Q=[pi,4,3,0];
+kappa = curvature(Q,h);
+theta = angle(Q);
 q=transpose([0.5,2,1,0.5,3,2]);
-delta=curvature(Q,s)
-phi=angle(Q)
-p = tippos(delta,s,phi)
