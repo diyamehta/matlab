@@ -20,28 +20,50 @@ p2 = ((L2)*[cos(delta2)*(sin(theta2)-1); (-sin(delta2)*(sin(theta2)-1)); -cos(th
 p3 = ((L3)*[cos(delta3)*(sin(theta3)-1); (-sin(delta3)*(sin(theta3)-1)); -cos(theta3)])/(theta3-theta0)
 
 %rotation matrix eqn3 in configuration paper
-%eqn 3,4,5 remaining
+%define g,p,e,g
+
+syms c1 c2 c3 e1 e2 e3 g1 g2 g3 
+
+p1= exp(-delta1*skewdec(c1));
+p2= exp((theta0-theta2)*skewdec(c2));
+p3= exp(delta3*skewdec(c3));
+
+G1=p1*e1*g1;
+G2=p2*e2*g2;
+G3=p3*e3*g3;
+
+%with respect to robot's base
+syms pg pg1 G1 
+for k=2:3:1
+pg1(k) = pg1(k-1) + G1(k-1)*pg(k);
+G1(k) = G1(k-1)*G(k);
+end 
+
 syms r beta 
 q1 = [r*cos(delta1)*(theta1-theta0); r*cos(delta1+beta)*(theta1-theta0); r*cos(delta1+(2*beta))*(theta1-theta0)];
 q2 = [r*cos(delta2)*(theta2-theta0); r*cos(delta2+beta)*(theta2-theta0); r*cos(delta2+(2*beta))*(theta2-theta0)];
 q3 = [r*cos(delta3)*(theta3-theta0); r*cos(delta3+beta)*(theta3-theta0); r*cos(delta3+(2*beta))*(theta3-theta0)];
 
-syms J1 J2 J3
+syms phi1 phi2 phi3
+
+J1 = G1*[-sin(delta1) cos(delta1)*sin(phi1); -cos(delta1) -sin(delta1)*sin(phi1); 0 cos(phi1)-1];
+J2 = G2*[-sin(delta2) cos(delta2)*sin(phi2); -cos(delta2) -sin(delta2)*sin(phi2); 0 cos(phi2)-1];
+J3 = G3*[-sin(delta3) cos(delta3)*sin(phi3); -cos(delta3) -sin(delta3)*sin(phi3); 0 cos(phi3)-1];
+
 v1=J1*psid1;   %v1 diff of q1 wrt t
 v2=J2*psid2;
 v3=J3*psid3;
 
-J = eye(3).*[J1 0 0; 0 J2 0; 0 0 J3];
-v = transpose([transpose(v1) transpose(v2) transpose(v3)]);
-psid = transpose([transpose(psid1) transpose(psid2) transpose(psid3)]);
-v=J.*psid;
+J = [eye(3,2), zeros(3,2), zeros(3,2); eye(3,2) eye(3,2) zeros(3,2); eye(3,2) eye(3,2) eye(3,2)].*[J1 zeros(3,2) zeros(3,2); zeros(3,2) J2 zeros(3,2); zeros(3,2) zeros(3,2) J3];
 
-syms e psicurrent psidesired eta qcomm
+psid = transpose([transpose(psid1) transpose(psid2) transpose(psid3)]);
+
+syms psicurrent psidesired eta qcomm psidt Kd
 e = psidesired- psicurrent;
 syms Kp
 qtcomm = J*(psidt+(Kp*e));
 
-et = psidt - (eta*pinv(J)*qtcomm)
+et = psidt - (eta*pinv(J)*qtcomm);
 
 L=(1/2)*(transpose(e))*Kp*e;
 dV=(1-eta)*transpose(e)*Kp*psid-eta*transpose(e)*Kp*Kp*e;
