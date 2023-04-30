@@ -1,18 +1,23 @@
 %Function to calculate actuator strength as a function of system dynamics
 %Last modified by Anup Teejo Mathew 02.03.2022
 
-function u = CustomActuatorStrength(Tr,~,g,J,t,qd,Jd,M,C,F,Bq,lsqoptions)
-q= [sqrt(R(1,1)+R(2,2)+R(3,3)+1)/2; (R(3,2)-R(2,3))/(2*A); (R(1,3)-R(3,1))/(4*A); (R(2,1)-R(1,2))/(4*A)];
-A= 0.4;
-s=10;
-Q=[pi,4,3,0];
+function u = CustomActuatorStrength(Tr,q,g,J,t,qd,Jd,M,C,F,Bq,lsqoptions)
+s=10; %lengthofcurvature
+Q=[pi,4,3,0]; %quaternion vector
 
-kappa = acos((1-2*(((Q(2)^2)+(Q(3)^2)))))/s;
-phi = atan((Q(2)*Q(1)+Q(3)*Q(4))/(Q(2)*Q(4)-Q(3)*Q(1)));
+kappa= curvat(Q,s); %curvature
+phi = bendangle(Q); %angle
 
-p= [((kappa*(s^2)*cos(phi)*((kappa)^2*(s)^2-12)))/24; ((kappa*(s)^2*sin(phi))*((kappa)^2*(s)^2-12))/24; (s-(kappa*(s)^3))/6;];
-R= [cos(phi)*cos(phi)*(cos(kappa*s)-1)+1, sin(phi)*cos(phi)*(cos(kappa*s)-1), -cos(phi)*sin(kappa*s), (cos(phi)*(cos(kappa*s)-1))/kappa; sin(phi)*cos(phi)*(cos(kappa*s)-1), cos(phi)*cos(phi)*(1-cos(kappa*s))+cos(kappa*s), -sin(phi)*sin(kappa*s), (sin(phi)*(cos(kappa*s)-1))/kappa; cos(phi)*sin(kappa*s), sin(phi)*sin(kappa*s), cos(kappa*s), (sin(kappa*s))/kappa; 0, 0, 0, 1];
+%transition matrix
+T = transition(phi, kappa, s);
 
+%Quaternion in terms of transition matrix (we prolly dont need this)  
+%Q= [sqrt(T(1,1)+T(2,2)+T(3,3)+1)/2; (T(3,2)-T(2,3))/(2*A); (T(1,3)-T(3,1))/(4*A); (T(2,1)-T(1,2))/(4*A)];
+
+%p is the tip position (x,y,z)
+p = tippos(kappa, s, phi);
+
+%%%%%%%%%%%%%%%
 eta = J*qd;
 %lsqoptions = optimoptions('lsqlin','Display','off'); defined inside dynamics.m file to be used for lsqlin or lsqnonneg
 
@@ -141,4 +146,5 @@ elseif control_type == 6 %6D
 % es=[es;e'*e];
 
 end
+
 
